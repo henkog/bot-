@@ -2,203 +2,212 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Cyber Casino Hub</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Cyber Casino Elite</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --neon: #00d4ff; --pink: #ff00ff; --gold: #fbc531; --bg: #0a0b10; }
+        :root { --neon: #00d4ff; --pink: #ff00ff; --gold: #fbc531; --bg: #05060a; }
         
-        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding-bottom: 80px; overflow-x: hidden; }
-        
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+
+        body { 
+            background: var(--bg); color: white; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            margin: 0; padding: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+        }
+
         /* HEADER */
         .header { 
-            padding: 20px; display: flex; justify-content: space-between; align-items: center; 
-            background: rgba(255,255,255,0.03); backdrop-filter: blur(10px); 
-            border-bottom: 1px solid rgba(0,212,255,0.2); position: sticky; top: 0; z-index: 100;
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(255,255,255,0.03); backdrop-filter: blur(15px);
+            border-bottom: 1px solid rgba(0, 212, 255, 0.2);
         }
-        .balance-container { text-align: right; }
-        #p-bal { color: var(--gold); font-size: 1.5rem; font-weight: bold; text-shadow: 0 0 10px rgba(251,197,49,0.5); }
-        .label { font-size: 0.7rem; color: #888; text-transform: uppercase; }
+        #p-bal { color: var(--gold); font-size: 1.6rem; font-weight: 800; text-shadow: 0 0 15px rgba(251,197,49,0.4); }
+        .label { font-size: 0.65rem; color: #888; text-transform: uppercase; letter-spacing: 1px; }
 
-        /* PAGES */
-        .game-card { display: none; padding: 20px; flex-direction: column; align-items: center; min-height: 60vh; justify-content: center; }
-        .active { display: flex; animation: slideUp 0.3s ease-out; }
+        /* ИГРОВЫЕ ЗОНЫ */
+        .game-container { flex: 1; position: relative; }
+        .game-card { 
+            position: absolute; inset: 0; display: none; flex-direction: column; 
+            align-items: center; justify-content: center; padding: 20px;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); opacity: 0; transform: translateY(20px);
+        }
+        .game-card.active { display: flex; opacity: 1; transform: translateY(0); }
 
-        /* SLOTS */
-        .slot-box { display: flex; gap: 10px; background: #000; padding: 20px; border-radius: 20px; border: 2px solid var(--neon); box-shadow: 0 0 20px rgba(0,212,255,0.2); }
-        .slot { width: 70px; height: 100px; background: #1a1a1a; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; border: 1px solid #333; }
+        /* ЭЛЕМЕНТЫ ИГР */
+        .slot-box { display: flex; gap: 12px; background: #000; padding: 20px; border-radius: 24px; border: 2px solid var(--neon); box-shadow: 0 0 30px rgba(0,212,255,0.15); }
+        .slot { width: 75px; height: 100px; background: #111; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 3.5rem; border: 1px solid #222; }
 
-        /* ROULETTE */
-        .wheel-wrap { position: relative; width: 260px; height: 260px; margin: 20px 0; }
-        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #222; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); background: conic-gradient(#ff4757 0deg 180deg, #2f3542 180deg 360deg); position: relative; }
-        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--neon); z-index: 10; filter: drop-shadow(0 0 5px var(--neon)); }
+        .wheel-wrap { position: relative; width: 260px; height: 260px; }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; border: 8px solid #1a1a1a; transition: transform 4s cubic-bezier(0.1, 0, 0.1, 1); background: conic-gradient(#ff4757 0deg 180deg, #2f3542 180deg 360deg); box-shadow: 0 0 40px rgba(0,0,0,0.5); }
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%); width: 0; height: 0; border-left: 15px solid transparent; border-right: 15px solid transparent; border-top: 30px solid var(--neon); z-index: 10; }
 
-        /* COIN */
-        .coin { width: 130px; height: 130px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4rem; border: 8px solid #e1b12c; transition: 0.6s; transform-style: preserve-3d; box-shadow: 0 0 30px rgba(251,197,49,0.3); }
-        .flipping { transform: rotateY(1440deg); }
+        .coin { width: 140px; height: 140px; background: var(--gold); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 4.5rem; border: 8px solid #e1b12c; transition: 0.6s; transform-style: preserve-3d; }
+        .flipping { animation: coinFlip 0.6s infinite linear; }
+        @keyframes coinFlip { 0% { transform: rotateY(0); } 100% { transform: rotateY(360deg); } }
 
-        /* BUTTONS */
-        .btn { width: 85%; padding: 18px; border: none; border-radius: 15px; font-weight: bold; font-size: 1.1rem; cursor: pointer; color: white; transition: 0.2s; margin-top: 25px; text-transform: uppercase; letter-spacing: 1px; }
-        .btn-action { background: linear-gradient(45deg, var(--neon), var(--pink)); box-shadow: 0 5px 20px rgba(255,0,255,0.3); }
-        .btn:active { transform: scale(0.95); }
-        .btn:disabled { opacity: 0.5; filter: grayscale(1); }
+        /* КНОПКИ (Мгновенный отклик) */
+        .btn { 
+            width: 85%; max-width: 300px; padding: 20px; border: none; border-radius: 18px; 
+            font-weight: 800; font-size: 1.1rem; color: white; cursor: pointer; 
+            background: linear-gradient(135deg, var(--neon), var(--pink));
+            box-shadow: 0 8px 25px rgba(255, 0, 255, 0.25);
+            transition: transform 0.1s, filter 0.2s;
+            text-transform: uppercase; margin-top: 30px;
+        }
+        .btn:active { transform: scale(0.92); filter: brightness(1.2); }
+        .btn:disabled { opacity: 0.4; filter: grayscale(1); pointer-events: none; }
 
-        /* NAVIGATION */
-        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #0a0b10; border-top: 1px solid #222; padding: 10px 0; }
-        .nav-item { flex: 1; text-align: center; font-size: 0.8rem; color: #555; transition: 0.3s; }
+        /* NAV BAR */
+        .nav { 
+            display: flex; background: rgba(10,11,16,0.95); backdrop-filter: blur(20px);
+            padding: 15px 0 30px 0; border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        .nav-item { flex: 1; text-align: center; color: #444; transition: 0.3s; font-size: 0.75rem; font-weight: 600; }
         .nav-item.active-nav { color: var(--neon); }
-        .nav-icon { font-size: 1.6rem; display: block; margin-bottom: 4px; }
-
-        @keyframes slideUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-icon { font-size: 1.7rem; display: block; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="header">
     <div>
-        <div class="label">Игрок</div>
-        <div id="p-name" style="font-weight: bold;">PILOT</div>
+        <div class="label" id="p-name-label">PILOT</div>
+        <div style="font-size: 0.9rem; font-weight: 600;">Cyber Division</div>
     </div>
-    <div class="balance-container">
-        <div class="label">Твой Баланс</div>
+    <div style="text-align: right;">
+        <div class="label">Balance</div>
         <div id="p-bal">0</div>
     </div>
 </div>
 
-<div id="slots" class="game-card active">
-    <div class="slot-box" id="slot-machine">
-        <div id="sl1" class="slot">💎</div>
-        <div id="sl2" class="slot">💎</div>
-        <div id="sl3" class="slot">💎</div>
+<div class="game-container">
+    <div id="slots" class="game-card active">
+        <div class="slot-box">
+            <div id="sl1" class="slot">💎</div>
+            <div id="sl2" class="slot">💎</div>
+            <div id="sl3" class="slot">💎</div>
+        </div>
+        <button class="btn" id="btn-slots">КРУТИТЬ (100)</button>
     </div>
-    <button id="slotBtn" class="btn btn-action" onclick="playSlots()">КРУТИТЬ (100)</button>
-</div>
 
-<div id="roulette" class="game-card">
-    <div class="wheel-wrap">
-        <div class="pointer"></div>
-        <div id="wheel" class="wheel"></div>
+    <div id="roulette" class="game-card">
+        <div class="wheel-wrap">
+            <div class="pointer"></div>
+            <div id="wheel" class="wheel"></div>
+        </div>
+        <div style="display:flex; gap:10px; width:100%; justify-content:center; margin-top:20px;">
+            <button class="btn" style="background:#ff4757; width:45%" id="btn-red">RED</button>
+            <button class="btn" style="background:#2f3542; width:45%" id="btn-black">BLACK</button>
+        </div>
     </div>
-    <div style="display:flex; gap:10px; width:100%; justify-content:center;">
-        <button id="r-red" class="btn btn-action" style="background:#ff4757" onclick="playRoulette('red')">КРАСНОЕ</button>
-        <button id="r-black" class="btn btn-action" style="background:#2f3542" onclick="playRoulette('black')">ЧЕРНОЕ</button>
-    </div>
-</div>
 
-<div id="coin" class="game-card">
-    <div id="coin-obj" class="coin">💰</div>
-    <div style="display:flex; gap:10px; width:100%; justify-content:center;">
-        <button id="c-heads" class="btn btn-action" onclick="playCoin('heads')">ОРЕЛ</button>
-        <button id="c-tails" class="btn btn-action" onclick="playCoin('tails')">РЕШКА</button>
+    <div id="coin" class="game-card">
+        <div id="coin-obj" class="coin">🟡</div>
+        <div style="display:flex; gap:10px; width:100%; justify-content:center;">
+            <button class="btn" style="width:45%" id="btn-heads">ОРЕЛ</button>
+            <button class="btn" style="width:45%" id="btn-tails">РЕШКА</button>
+        </div>
     </div>
 </div>
 
 <div class="nav">
-    <div class="nav-item active-nav" onclick="switchTab('slots', this)">
-        <span class="nav-icon">🎰</span>Слоты
-    </div>
-    <div class="nav-item" onclick="switchTab('roulette', this)">
-        <span class="nav-icon">🎡</span>Рулетка
-    </div>
-    <div class="nav-item" onclick="switchTab('coin', this)">
-        <span class="nav-icon">🪙</span>Монетка
-    </div>
+    <div class="nav-item active-nav" data-page="slots"><span class="nav-icon">🎰</span>SLOTS</div>
+    <div class="nav-item" data-page="roulette"><span class="nav-icon">🎡</span>WHEEL</div>
+    <div class="nav-item" data-page="coin"><span class="nav-icon">🪙</span>COIN</div>
 </div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
-    
-    // Получение баланса из URL
+    tg.enableClosingConfirmation();
+
     const urlParams = new URLSearchParams(window.location.search);
     let balance = parseInt(urlParams.get('bal')) || 1000;
-    document.getElementById('p-bal').innerText = balance;
-    document.getElementById('p-name').innerText = tg.initDataUnsafe.user?.first_name || "PILOT";
+    
+    const balEl = document.getElementById('p-bal');
+    balEl.innerText = balance;
+    document.getElementById('p-name-label').innerText = tg.initDataUnsafe.user?.first_name || "PILOT";
 
-    function animateBalance(target) {
-        const el = document.getElementById('p-bal');
-        let current = parseInt(el.innerText);
-        let step = target > current ? 5 : -5;
-        let timer = setInterval(() => {
+    // Плавное обновление баланса
+    function updateBal(newVal) {
+        let current = parseInt(balEl.innerText);
+        let diff = newVal - current;
+        let step = diff > 0 ? 5 : -5;
+        let t = setInterval(() => {
             current += step;
-            if ((step > 0 && current >= target) || (step < 0 && current <= target)) {
-                clearInterval(timer);
-                current = target;
+            if ((step > 0 && current >= newVal) || (step < 0 && current <= newVal)) {
+                clearInterval(t);
+                current = newVal;
             }
-            el.innerText = current;
+            balEl.innerText = current;
         }, 20);
+        balance = newVal;
     }
 
-    function switchTab(id, el) {
-        document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
-        document.getElementById(id).classList.add('active');
-        el.classList.add('active-nav');
-        tg.HapticFeedback.selectionChanged();
-    }
+    // Переключение вкладок (мгновенно)
+    document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('touchstart', (e) => {
+            document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+            document.getElementById(item.dataset.page).classList.add('active');
+            item.classList.add('active-nav');
+            tg.HapticFeedback.selectionChanged();
+        });
+    });
 
-    function sendToBot(game, result, winAmount) {
-        balance += (winAmount - 100);
-        animateBalance(balance);
-        
+    function finish(game, result, winAmt) {
+        updateBal(balance - 100 + winAmt);
         setTimeout(() => {
-            tg.sendData(JSON.stringify({ game: game, result: result }));
-        }, 1500);
+            tg.sendData(JSON.stringify({ game, result }));
+        }, 1200);
     }
 
-    // ИГРА: СЛОТЫ
-    function playSlots() {
-        if(balance < 100) return alert("Мало монет!");
-        const btn = document.getElementById('slotBtn');
-        btn.disabled = true;
-        const icons = ['💎', '7️⃣', '🍒', '🍋', '⚡'];
+    // ИГРЫ
+    document.getElementById('btn-slots').addEventListener('touchstart', () => {
+        if(balance < 100) return;
+        tg.HapticFeedback.impactOccurred('medium');
         let spins = 0;
-        let interval = setInterval(() => {
-            document.getElementById('sl1').innerText = icons[Math.floor(Math.random()*icons.length)];
-            document.getElementById('sl2').innerText = icons[Math.floor(Math.random()*icons.length)];
-            document.getElementById('sl3').innerText = icons[Math.floor(Math.random()*icons.length)];
+        let btn = document.getElementById('btn-slots');
+        btn.disabled = true;
+        let t = setInterval(() => {
+            const syms = ['💎','7️⃣','🍒','🍋','⚡'];
+            document.getElementById('sl1').innerText = syms[Math.floor(Math.random()*5)];
+            document.getElementById('sl2').innerText = syms[Math.floor(Math.random()*5)];
+            document.getElementById('sl3').innerText = syms[Math.floor(Math.random()*5)];
             if(spins++ > 20) {
-                clearInterval(interval);
-                const s1 = document.getElementById('sl1').innerText;
-                const s2 = document.getElementById('sl2').innerText;
-                const s3 = document.getElementById('sl3').innerText;
-                const win = (s1 === s2 && s2 === s3);
-                sendToBot('slots', win ? 'win' : 'loss', win ? 500 : 0);
+                clearInterval(t);
+                let win = document.getElementById('sl1').innerText === document.getElementById('sl2').innerText && document.getElementById('sl2').innerText === document.getElementById('sl3').innerText;
+                finish('slots', win ? 'win' : 'loss', win ? 600 : 0);
             }
         }, 70);
-    }
+    });
 
-    // ИГРА: РУЛЕТКА
-    function playRoulette(bet) {
-        if(balance < 100) return alert("Мало монет!");
-        const wheel = document.getElementById('wheel');
-        const deg = Math.floor(Math.random() * 360) + 3600;
+    function rouletteStart(bet) {
+        if(balance < 100) return;
+        let wheel = document.getElementById('wheel');
+        let deg = Math.floor(Math.random()*360) + 3600;
         wheel.style.transform = `rotate(${deg}deg)`;
-        tg.HapticFeedback.impactOccurred('medium');
-        
         setTimeout(() => {
-            const actualDeg = deg % 360;
-            const resColor = (actualDeg > 180) ? 'red' : 'black';
-            const win = (resColor === bet);
-            sendToBot('roulette', win ? 'win' : 'loss', win ? 200 : 0);
+            let res = (deg % 360 > 180) ? 'red' : 'black';
+            finish('roulette', res === bet ? 'win' : 'loss', res === bet ? 200 : 0);
         }, 4000);
     }
+    document.getElementById('btn-red').addEventListener('touchstart', () => rouletteStart('red'));
+    document.getElementById('btn-black').addEventListener('touchstart', () => rouletteStart('black'));
 
-    // ИГРА: МОНЕТКА
-    function playCoin(bet) {
-        if(balance < 100) return alert("Мало монет!");
-        const coin = document.getElementById('coin-obj');
-        coin.classList.add('flipping');
-        
+    function coinStart(bet) {
+        if(balance < 100) return;
+        let c = document.getElementById('coin-obj');
+        c.classList.add('flipping');
         setTimeout(() => {
-            const isHeads = Math.random() > 0.5;
-            coin.innerText = isHeads ? '💰' : '🥈';
-            coin.classList.remove('flipping');
-            const res = isHeads ? 'heads' : 'tails';
-            const win = (res === bet);
-            sendToBot('coin', win ? 'win' : 'loss', win ? 190 : 0);
-        }, 600);
+            c.classList.remove('flipping');
+            let res = Math.random() > 0.5 ? 'heads' : 'tails';
+            c.innerText = res === 'heads' ? '🟡' : '🥈';
+            finish('coin', res === bet ? 'win' : 'loss', res === bet ? 190 : 0);
+        }, 1000);
     }
+    document.getElementById('btn-heads').addEventListener('touchstart', () => coinStart('heads'));
+    document.getElementById('btn-tails').addEventListener('touchstart', () => coinStart('tails'));
 </script>
 </body>
 </html>
