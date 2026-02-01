@@ -3,190 +3,180 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Stake Clone WebApp</title>
+    <title>Stake Elite TG</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         :root {
-            --stake-bg: #0f212e;
-            --stake-card: #1a2c38;
-            --stake-green: #00e701;
-            --stake-blue: #2f4553;
-            --text-main: #b1bad3;
+            --bg: #0f212e; --card: #1a2c38; --green: #00e701;
+            --blue: #2f4553; --text: #b1bad3; --gold: #fbc531;
         }
-
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; touch-action: manipulation; }
-        
         body { 
-            background: var(--stake-bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif;
-            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+            background: var(--bg); color: white; font-family: 'Inter', sans-serif;
+            margin: 0; display: flex; flex-direction: column; height: 100vh;
         }
 
-        /* TOP BAR */
-        .header { 
-            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; 
-            background: var(--stake-card); border-bottom: 2px solid #213743;
+        /* HEADER & XP BAR */
+        .header { padding: 10px 15px; background: var(--card); border-bottom: 2px solid #213743; }
+        .top-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .wallet { background: #071824; padding: 5px 12px; border-radius: 4px; font-weight: bold; border: 1px solid #2f4553; }
+        .xp-bar { width: 100%; height: 4px; background: #071824; border-radius: 2px; overflow: hidden; }
+        .xp-progress { height: 100%; background: var(--green); width: 45%; transition: 0.5s; }
+
+        /* CONTENT */
+        .viewport { flex: 1; position: relative; overflow-y: auto; padding: 15px; }
+        .game-view { display: none; flex-direction: column; gap: 20px; align-items: center; }
+        .game-view.active { display: flex; }
+
+        /* LIMBO STYLE */
+        .limbo-display { font-size: 4rem; font-weight: 900; color: var(--gold); margin: 40px 0; text-shadow: 0 0 20px rgba(251,197,49,0.3); }
+
+        /* TOWER STYLE */
+        .tower-grid { display: grid; grid-template-rows: repeat(8, 1fr); gap: 5px; width: 100%; max-width: 250px; }
+        .tower-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; opacity: 0.5; pointer-events: none; }
+        .tower-row.active { opacity: 1; pointer-events: auto; }
+        .tower-cell { height: 40px; background: var(--blue); border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+
+        /* STAKE CONTROLS */
+        .control-panel { background: var(--card); padding: 15px; border-radius: 8px; width: 100%; margin-top: auto; }
+        .input-group { background: #071824; border: 2px solid #2f4553; border-radius: 4px; display: flex; align-items: center; padding: 8px; margin-bottom: 10px; }
+        .input-group input { background: transparent; border: none; color: white; flex: 1; font-weight: bold; outline: none; }
+        .bet-btn { 
+            width: 100%; background: var(--green); color: #000; border: none; padding: 15px; 
+            border-radius: 4px; font-weight: 800; text-transform: uppercase; transition: 0.1s;
         }
-        .wallet { 
-            background: #071824; padding: 8px 15px; border-radius: 4px; display: flex; align-items: center; gap: 8px;
-            font-weight: bold; color: #fff; border: 1px solid #213743;
-        }
+        .bet-btn:active { transform: scale(0.98); }
 
-        /* MAIN CONTENT */
-        .game-area { flex: 1; position: relative; display: flex; flex-direction: column; }
-        .view { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 15px; }
-        .view.active { display: flex; }
-
-        /* CONTROL PANEL (STAKE STYLE) */
-        .controls {
-            background: var(--stake-card); padding: 15px; border-radius: 8px; width: 100%; max-width: 400px;
-            display: flex; flex-direction: column; gap: 10px; margin-top: auto;
-        }
-        .bet-input-wrap { background: #071824; border: 2px solid #2f4553; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; }
-        .stake-btn { 
-            background: var(--stake-green); color: #000; border: none; padding: 15px; 
-            border-radius: 4px; font-weight: 800; cursor: pointer; text-transform: uppercase;
-        }
-        .stake-btn:disabled { background: #2f4553; color: #b1bad3; }
-
-        /* MINES GRID */
-        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; }
-        .cell { aspect-ratio: 1; background: var(--stake-blue); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.1s; }
-        .cell.open { background: var(--stake-card); border: 2px solid var(--stake-green); shadow: 0 0 10px var(--stake-green); }
-
-        /* NAVIGATION */
-        .navbar { display: flex; background: var(--stake-card); padding: 10px 0 25px; }
-        .nav-link { flex: 1; text-align: center; color: var(--text-main); font-size: 0.7rem; font-weight: bold; }
-        .nav-link.active { color: white; border-top: 2px solid var(--stake-green); }
-
-        /* PLINKO */
-        canvas { max-width: 100%; height: auto; }
+        /* NAV */
+        .footer-nav { display: flex; background: var(--card); padding: 10px 0 30px; border-top: 1px solid #213743; }
+        .nav-tab { flex: 1; text-align: center; color: var(--text); font-size: 0.7rem; font-weight: bold; cursor: pointer; }
+        .nav-tab.active { color: white; }
+        .nav-tab span { display: block; font-size: 1.4rem; margin-bottom: 2px; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="font-weight: bold; color: var(--stake-green)">STAKE.TG</div>
-    <div class="wallet">
-        <span id="p-bal">0.00</span> <span style="color: var(--stake-green)">💰</span>
+    <div class="top-row">
+        <div style="font-size: 0.8rem; font-weight: 800; color: var(--green);">STAKE ELITE</div>
+        <div class="wallet" id="wallet-val">0.00 💰</div>
     </div>
+    <div class="xp-bar"><div class="xp-progress" id="xp-fill"></div></div>
 </div>
 
-<div class="game-area">
-    <div id="view-mines" class="view active">
-        <div id="mines-status" style="margin-bottom: 20px; font-weight: bold; color: var(--text-main)">X 0.00</div>
-        <div class="mines-grid" id="mines-board"></div>
-        <div class="controls">
-            <div class="label">Bet Amount</div>
-            <div class="bet-input-wrap"><span>100.00</span> <span style="color: var(--text-main)">MAX</span></div>
-            <button class="stake-btn" id="m-action" onpointerdown="startMines()">Bet</button>
+<div class="viewport">
+    <div id="game-limbo" class="game-view active">
+        <div class="limbo-display" id="limbo-res">1.00x</div>
+        <div class="control-panel">
+            <div class="label" style="font-size: 0.7rem; color: var(--text); margin-bottom: 5px;">TARGET MULTIPLIER</div>
+            <div class="input-group">
+                <input type="number" id="limbo-target" value="2.00" step="0.1">
+                <span style="color: var(--text)">×</span>
+            </div>
+            <button class="bet-btn" onpointerdown="playLimbo()">Bet</button>
         </div>
     </div>
 
-    <div id="view-plinko" class="view">
-        <canvas id="plinko-canvas" width="300" height="350"></canvas>
-        <div class="controls">
-            <button class="stake-btn" onpointerdown="dropBall()">Drop Ball</button>
+    <div id="game-tower" class="game-view">
+        <div id="tower-x" style="font-size: 1.5rem; font-weight: bold; color: var(--green);">X 1.00</div>
+        <div class="tower-grid" id="tower-board"></div>
+        <div class="control-panel">
+            <button class="bet-btn" id="tower-action" onpointerdown="startTower()">Start Game</button>
         </div>
     </div>
 </div>
 
-<div class="navbar">
-    <div class="nav-link active" onpointerdown="switchTab('mines', this)">MINES</div>
-    <div class="nav-link" onpointerdown="switchTab('plinko', this)">PLINKO</div>
+<div class="footer-nav">
+    <div class="nav-tab active" onpointerdown="switchGame('limbo', this)"><span>🚀</span>LIMBO</div>
+    <div class="nav-tab" onpointerdown="switchGame('tower', this)"><span>🏰</span>TOWER</div>
+    <div class="nav-tab" onpointerdown="tg.close()"><span>🚪</span>EXIT</div>
 </div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
-    tg.backgroundColor = '#0f212e';
 
-    let balance = new URLSearchParams(window.location.search).get('bal') || 1000;
-    document.getElementById('p-bal').innerText = parseFloat(balance).toFixed(2);
+    let balance = parseFloat(new URLSearchParams(window.location.search).get('bal')) || 1000;
+    let xp = 45;
+    
+    function updateUI() {
+        document.getElementById('wallet-val').innerText = balance.toFixed(2) + ' 💰';
+        document.getElementById('xp-fill').style.width = xp + '%';
+    }
+    updateUI();
 
-    function switchTab(game, el) {
-        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById('view-' + game).classList.add('active');
+    function switchGame(game, el) {
+        document.querySelectorAll('.game-view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        document.getElementById('game-' + game).classList.add('active');
         el.classList.add('active');
         tg.HapticFeedback.selectionChanged();
     }
 
-    // --- MINES LOGIC ---
-    let mActive = false, mMines = [], mCount = 3, mX = 1.0, mOpened = 0;
-    
-    function startMines() {
-        if(mActive) { cashoutMines(); return; }
-        mActive = true; mX = 1.0; mOpened = 0; mMines = [];
-        document.getElementById('mines-board').innerHTML = '';
-        document.getElementById('m-action').innerText = 'Cashout';
-        document.getElementById('m-action').style.background = '#fbc531';
+    // --- LIMBO LOGIC ---
+    function playLimbo() {
+        if(balance < 100) return;
+        const target = parseFloat(document.getElementById('limbo-target').value);
+        const display = document.getElementById('limbo-res');
         
-        while(mMines.length < mCount) {
-            let r = Math.floor(Math.random()*25);
-            if(!mMines.includes(r)) mMines.push(r);
-        }
+        let result = (Math.random() * 10).toFixed(2); // Упрощенный шанс
+        let count = 1.00;
+        let speed = 20;
 
-        for(let i=0; i<25; i++) {
-            let c = document.createElement('div');
-            c.className = 'cell';
-            c.onpointerdown = () => openCell(i, c);
-            document.getElementById('mines-board').appendChild(c);
-        }
+        let anim = setInterval(() => {
+            count += 0.05;
+            display.innerText = count.toFixed(2) + 'x';
+            if(count >= result) {
+                clearInterval(anim);
+                display.style.color = result >= target ? 'var(--green)' : '#ff4757';
+                finishGame('limbo', result >= target ? Math.floor(100 * target) : 0);
+            }
+        }, speed);
     }
 
-    function openCell(idx, el) {
-        if(!mActive || el.classList.contains('open')) return;
-        if(mMines.includes(idx)) {
+    // --- TOWER LOGIC ---
+    let towerLevel = 0;
+    function startTower() {
+        const board = document.getElementById('tower-board');
+        board.innerHTML = '';
+        towerLevel = 7;
+        for(let i=0; i<8; i++) {
+            let row = document.createElement('div');
+            row.className = 'tower-row' + (i === 7 ? ' active' : '');
+            row.id = 'row-' + i;
+            for(let j=0; j<3; j++) {
+                let cell = document.createElement('div');
+                cell.className = 'tower-cell';
+                cell.onpointerdown = () => chooseTower(i, j, cell);
+                row.appendChild(cell);
+            }
+            board.appendChild(row);
+        }
+        document.getElementById('tower-action').innerText = 'Cashout';
+    }
+
+    function chooseTower(rowIdx, cellIdx, el) {
+        let isMine = Math.random() < 0.3;
+        if(isMine) {
             el.innerText = '💣'; el.style.background = '#ff4757';
-            mActive = false; endGame('mines', 0);
+            finishGame('tower', 0);
         } else {
-            el.classList.add('open'); el.innerText = '💎';
-            mOpened++; mX *= 1.4;
-            document.getElementById('mines-status').innerText = 'X ' + mX.toFixed(2);
+            el.innerText = '💎'; el.style.background = 'var(--green)';
+            document.getElementById('row-'+towerLevel).classList.remove('active');
+            towerLevel--;
+            if(towerLevel >= 0) document.getElementById('row-'+towerLevel).classList.add('active');
             tg.HapticFeedback.impactOccurred('light');
         }
     }
 
-    function cashoutMines() {
-        mActive = false;
-        endGame('mines', Math.floor(100 * mX));
-    }
-
-    function endGame(game, win) {
-        tg.sendData(JSON.stringify({ game, amount: win }));
+    function finishGame(game, win) {
+        balance = balance - 100 + win;
+        xp += 2;
+        updateUI();
         tg.HapticFeedback.notificationOccurred(win > 0 ? 'success' : 'error');
-        setTimeout(() => tg.close(), 1000);
-    }
-
-    // --- PLINKO ---
-    const canvas = document.getElementById('plinko-canvas');
-    const ctx = canvas.getContext('2d');
-    function drawBoard() {
-        ctx.clearRect(0,0,300,350);
-        ctx.fillStyle = '#2f4553';
-        for(let r=0; r<10; r++) {
-            for(let c=0; c<=r; c++) {
-                ctx.beginPath();
-                ctx.arc(150 - (r*12) + (c*24), 30 + (r*28), 3, 0, Math.PI*2);
-                ctx.fill();
-            }
-        }
-    }
-    drawBoard();
-
-    function dropBall() {
-        let x = 150, y = 10, vx = 0, vy = 4, row = 0;
-        let t = setInterval(() => {
-            drawBoard();
-            y += vy; x += vx;
-            ctx.fillStyle = '#00e701';
-            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
-            if(y > 30 + (row*28)) {
-                vx = (Math.random()-0.5)*8; row++;
-                tg.HapticFeedback.impactOccurred('light');
-            }
-            if(row > 10) { clearInterval(t); endGame('plinko', Math.random()>0.5?150:0); }
-        }, 30);
+        setTimeout(() => {
+            tg.sendData(JSON.stringify({ game, amount: win }));
+        }, 1000);
     }
 </script>
 </body>
