@@ -3,74 +3,138 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>CyberSlots 2026</title>
+    <title>CyberCasino 2026</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --neon-blue: #00d4ff; --neon-pink: #ff00ff; --bg-dark: #0a0b10; }
-        body { background: var(--bg-dark); color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; }
-        .machine { background: #111; padding: 25px; border-radius: 20px; border: 2px solid var(--neon-blue); box-shadow: 0 0 20px rgba(0, 212, 255, 0.2); }
-        .slots { display: flex; gap: 10px; background: #000; padding: 15px; border-radius: 12px; }
-        .slot { width: 70px; height: 90px; background: #222; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 1px solid #333; }
-        .spin-btn { margin-top: 30px; width: 220px; height: 60px; background: linear-gradient(45deg, var(--neon-blue), var(--neon-pink)); border: none; border-radius: 30px; color: white; font-size: 1.2rem; font-weight: bold; cursor: pointer; box-shadow: 0 0 15px var(--neon-pink); }
-        .spin-btn:disabled { filter: grayscale(1); opacity: 0.5; }
-        #status { margin-top: 20px; font-size: 1.1rem; color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); }
+        :root { --neon: #00d4ff; --pink: #ff00ff; --gold: #fbc531; --bg: #0a0b10; }
+        body { background: var(--bg); color: white; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; overflow: hidden; }
+        
+        /* Хедер */
+        .header { padding: 20px; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.03); border-bottom: 1px solid rgba(0,212,255,0.2); }
+        .balance { color: var(--gold); font-size: 1.3rem; font-weight: bold; text-shadow: 0 0 10px rgba(251,197,49,0.4); }
+
+        /* Контент страниц */
+        .page { display: none; padding: 20px; flex-direction: column; align-items: center; height: 70vh; justify-content: center; }
+        .active { display: flex; }
+
+        /* СЛОТЫ */
+        .machine { background: #111; padding: 20px; border-radius: 20px; border: 2px solid var(--neon); box-shadow: 0 0 30px rgba(0,212,255,0.2); }
+        .slots { display: flex; gap: 10px; margin-bottom: 20px; }
+        .slot { width: 70px; height: 90px; background: #000; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 3rem; border: 1px solid #333; }
+        .spin-btn { width: 100%; padding: 15px; background: linear-gradient(45deg, var(--neon), var(--pink)); border: none; border-radius: 15px; color: white; font-weight: bold; font-size: 1.1rem; cursor: pointer; box-shadow: 0 5px 15px rgba(255,0,255,0.3); }
+
+        /* МАГАЗИН */
+        .shop-item { width: 90%; background: #1a1a2e; padding: 15px; margin: 10px 0; border-radius: 15px; border: 1px solid #333; display: flex; justify-content: space-between; align-items: center; }
+        .buy-btn { background: var(--neon); color: black; border: none; padding: 8px 15px; border-radius: 8px; font-weight: bold; }
+
+        /* ТАБ-БАР (Нижнее меню) */
+        .nav { position: fixed; bottom: 0; width: 100%; display: flex; background: #111; border-top: 1px solid #333; padding: 10px 0; }
+        .nav-item { flex: 1; text-align: center; color: #666; font-size: 0.8rem; cursor: pointer; transition: 0.3s; }
+        .nav-item.active-nav { color: var(--neon); transform: translateY(-3px); }
+        .nav-icon { font-size: 1.5rem; display: block; }
+
+        /* Анимации */
+        @keyframes bounce { 0%, 100% { transform: scale(1); } 50% { transform: scale(0.95); } }
+        .spinning { animation: bounce 0.1s infinite; }
     </style>
 </head>
 <body>
-    <div class="machine" id="machine">
-        <div class="slots">
-            <div id="s1" class="slot">💎</div>
-            <div id="s2" class="slot">💎</div>
-            <div id="s3" class="slot">💎</div>
+
+    <div class="header">
+        <div id="username">PLAYER</div>
+        <div class="balance"><span id="balance">1000</span> 💰</div>
+    </div>
+
+    <div id="game-page" class="page active">
+        <div class="machine" id="machine">
+            <div class="slots">
+                <div id="s1" class="slot">💎</div>
+                <div id="s2" class="slot">💎</div>
+                <div id="s3" class="slot">💎</div>
+            </div>
+            <button class="spin-btn" id="spinBtn" onclick="play()">SPIN (100)</button>
+        </div>
+        <p id="status" style="margin-top:20px; color: var(--neon)">READY</p>
+    </div>
+
+    <div id="shop-page" class="page">
+        <h2>CYBER SHOP</h2>
+        <div class="shop-item">
+            <span>🍀 Lucky Amulet</span>
+            <button class="buy-btn" onclick="buy('amulet', 1000)">1000 💰</button>
+        </div>
+        <div class="shop-item">
+            <span>🛡️ Shield Bot</span>
+            <button class="buy-btn" onclick="buy('shield', 800)">800 💰</button>
         </div>
     </div>
-    <div id="status">READY TO SPIN</div>
-    <button class="spin-btn" id="spinBtn" onclick="runGame()">SPIN (100💰)</button>
+
+    <div class="nav">
+        <div class="nav-item active-nav" onclick="showPage('game')">
+            <span class="nav-icon">🎰</span> Slots
+        </div>
+        <div class="nav-item" onclick="showPage('shop')">
+            <span class="nav-icon">🛒</span> Shop
+        </div>
+        <div class="nav-item" onclick="tg.close()">
+            <span class="nav-icon">🚪</span> Exit
+        </div>
+    </div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+        document.getElementById('username').innerText = tg.initDataUnsafe.user?.first_name || "PILOT";
 
         const symbols = ['💎', '🍒', '🍋', '7️⃣', '⚡', '🍇'];
 
-        function runGame() {
+        function showPage(pageId) {
+            document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active-nav'));
+            
+            document.getElementById(pageId + '-page').classList.add('active');
+            event.currentTarget.classList.add('active-nav');
+        }
+
+        function play() {
             const btn = document.getElementById('spinBtn');
+            const machine = document.getElementById('machine');
             btn.disabled = true;
-            document.getElementById('status').innerText = "ROLLING...";
-
-            let iterations = 0;
+            machine.classList.add('spinning');
+            
+            let count = 0;
             let timer = setInterval(() => {
-                document.getElementById('s1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                document.getElementById('s2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                document.getElementById('s3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
-                iterations++;
-
-                if (iterations > 20) {
+                document.getElementById('s1').innerText = symbols[Math.floor(Math.random()*symbols.length)];
+                document.getElementById('s2').innerText = symbols[Math.floor(Math.random()*symbols.length)];
+                document.getElementById('s3').innerText = symbols[Math.floor(Math.random()*symbols.length)];
+                count++;
+                if(count > 20) {
                     clearInterval(timer);
-                    processResult();
+                    machine.classList.remove('spinning');
+                    finishGame();
                 }
             }, 70);
         }
 
-        function processResult() {
+        function finishGame() {
             const r1 = document.getElementById('s1').innerText;
             const r2 = document.getElementById('s2').innerText;
             const r3 = document.getElementById('s3').innerText;
             
-            let winType = "loss";
-            if (r1 === r2 && r2 === r3) {
-                winType = "jackpot"; // 3 в ряд
-            } else if (r1 === r2 || r2 === r3 || r1 === r3) {
-                winType = "small"; // 2 в ряд
-            }
+            let result = "loss";
+            if(r1 === r2 && r2 === r3) result = "jackpot";
+            else if(r1 === r2 || r2 === r3 || r1 === r3) result = "small";
 
-            document.getElementById('status').innerText = winType === "loss" ? "TRY AGAIN!" : "WINNER!";
+            tg.HapticFeedback.notificationOccurred(result === "loss" ? 'error' : 'success');
             
-            // Самая важная часть: отправка боту через 1 секунду
+            // Отправка данных боту
             setTimeout(() => {
-                tg.sendData(JSON.stringify({ result: winType }));
-                tg.close();
-            }, 1200);
+                tg.sendData(JSON.stringify({ type: "game", result: result }));
+            }, 1000);
+        }
+
+        function buy(item, price) {
+            tg.sendData(JSON.stringify({ type: "buy", item: item, price: price }));
         }
     </script>
 </body>
