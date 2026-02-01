@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        body { background: #121212; color: white; font-family: sans-serif; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; margin: 0; overflow: hidden; }
+        .slot-machine { background: #222; border: 5px solid #f39c12; border-radius: 20px; padding: 20px; box-shadow: 0 0 30px #f39c1255; }
+        .slots { display: flex; gap: 10px; font-size: 50px; background: white; padding: 10px; border-radius: 10px; color: black; }
+        .slot { width: 70px; height: 80px; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+        .btn { margin-top: 30px; background: linear-gradient(135deg, #f39c12, #d35400); border: none; padding: 15px 40px; color: white; border-radius: 50px; font-size: 20px; font-weight: bold; cursor: pointer; }
+        .btn:disabled { background: #555; }
+        #status { margin-top: 20px; font-size: 18px; color: #f39c12; }
+    </style>
+</head>
+<body>
+    <div class="slot-machine">
+        <div class="slots">
+            <div class="slot" id="s1">🎰</div>
+            <div class="slot" id="s2">🎰</div>
+            <div class="slot" id="s3">🎰</div>
+        </div>
+    </div>
+    <button class="btn" id="spinBtn" onclick="spin()">КРУТИТЬ (100💰)</button>
+    <div id="status">Готовы к игре?</div>
+
+    <script>
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        const symbols = ['🍒', '🍋', '🍇', '🔔', '💎', '7️⃣'];
+
+        function spin() {
+            const btn = document.getElementById('spinBtn');
+            const status = document.getElementById('status');
+            btn.disabled = true;
+            status.innerText = "Крутим...";
+
+            let count = 0;
+            const interval = setInterval(() => {
+                document.getElementById('s1').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('s2').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                document.getElementById('s3').innerText = symbols[Math.floor(Math.random() * symbols.length)];
+                count++;
+                if (count > 20) {
+                    clearInterval(interval);
+                    finish();
+                }
+            }, 50);
+        }
+
+        function finish() {
+            const s1 = document.getElementById('s1').innerText;
+            const s2 = document.getElementById('s2').innerText;
+            const s3 = document.getElementById('s3').innerText;
+            
+            let isWin = (s1 === s2 && s2 === s3);
+            document.getElementById('status').innerText = isWin ? "ВЫИГРЫШ! 🎉" : "Попробуй еще раз!";
+            
+            // Отправляем данные боту
+            setTimeout(() => {
+                tg.sendData(JSON.stringify({ win: isWin }));
+            }, 1000);
+        }
+    </script>
+</body>
+</html>
