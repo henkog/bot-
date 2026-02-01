@@ -3,241 +3,190 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Cyber Casino Pro</title>
+    <title>Stake Clone WebApp</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        :root { --neon: #00d4ff; --pink: #ff00ff; --gold: #fbc531; --bg: #0d0f17; }
+        :root {
+            --stake-bg: #0f212e;
+            --stake-card: #1a2c38;
+            --stake-green: #00e701;
+            --stake-blue: #2f4553;
+            --text-main: #b1bad3;
+        }
+
         * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; touch-action: manipulation; }
-        body { background: var(--bg); color: white; font-family: 'Inter', sans-serif; margin: 0; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+        
+        body { 
+            background: var(--stake-bg); color: white; font-family: 'Segoe UI', Tahoma, sans-serif;
+            margin: 0; display: flex; flex-direction: column; height: 100vh; overflow: hidden;
+        }
 
-        /* HEADER */
-        .header { padding: 15px 25px; display: flex; justify-content: space-between; align-items: center; background: #1a1d29; border-bottom: 2px solid #2d3245; }
-        #p-bal { color: var(--gold); font-size: 1.5rem; font-weight: 800; text-shadow: 0 0 10px rgba(251,197,49,0.3); }
+        /* TOP BAR */
+        .header { 
+            padding: 10px 20px; display: flex; justify-content: space-between; align-items: center; 
+            background: var(--stake-card); border-bottom: 2px solid #213743;
+        }
+        .wallet { 
+            background: #071824; padding: 8px 15px; border-radius: 4px; display: flex; align-items: center; gap: 8px;
+            font-weight: bold; color: #fff; border: 1px solid #213743;
+        }
 
-        .game-container { flex: 1; position: relative; overflow: hidden; }
-        .game-card { position: absolute; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center; padding: 20px; transition: 0.3s; }
-        .game-card.active { display: flex; animation: fadeIn 0.4s ease; }
+        /* MAIN CONTENT */
+        .game-area { flex: 1; position: relative; display: flex; flex-direction: column; }
+        .view { display: none; flex: 1; flex-direction: column; align-items: center; justify-content: center; padding: 15px; }
+        .view.active { display: flex; }
 
-        /* SLOTS (NEW ANIMATION) */
-        .slot-machine { display: flex; gap: 10px; background: #000; padding: 20px; border-radius: 20px; border: 2px solid #2d3245; position: relative; }
-        .reel { width: 70px; height: 100px; background: #1a1d29; border-radius: 10px; overflow: hidden; position: relative; border: 1px solid #333; }
-        .reel-inner { position: absolute; width: 100%; transition: top 0.1s linear; display: flex; flex-direction: column; align-items: center; }
-        .symbol { height: 100px; display: flex; align-items: center; justify-content: center; font-size: 3rem; }
+        /* CONTROL PANEL (STAKE STYLE) */
+        .controls {
+            background: var(--stake-card); padding: 15px; border-radius: 8px; width: 100%; max-width: 400px;
+            display: flex; flex-direction: column; gap: 10px; margin-top: auto;
+        }
+        .bet-input-wrap { background: #071824; border: 2px solid #2f4553; padding: 10px; border-radius: 4px; display: flex; justify-content: space-between; }
+        .stake-btn { 
+            background: var(--stake-green); color: #000; border: none; padding: 15px; 
+            border-radius: 4px; font-weight: 800; cursor: pointer; text-transform: uppercase;
+        }
+        .stake-btn:disabled { background: #2f4553; color: #b1bad3; }
+
+        /* MINES GRID */
+        .mines-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 6px; width: 100%; max-width: 320px; }
+        .cell { aspect-ratio: 1; background: var(--stake-blue); border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; transition: 0.1s; }
+        .cell.open { background: var(--stake-card); border: 2px solid var(--stake-green); shadow: 0 0 10px var(--stake-green); }
+
+        /* NAVIGATION */
+        .navbar { display: flex; background: var(--stake-card); padding: 10px 0 25px; }
+        .nav-link { flex: 1; text-align: center; color: var(--text-main); font-size: 0.7rem; font-weight: bold; }
+        .nav-link.active { color: white; border-top: 2px solid var(--stake-green); }
 
         /* PLINKO */
-        #plinko-canvas { background: #1a1d29; border-radius: 15px; border: 1px solid #2d3245; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-
-        /* MINES */
-        .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-        .cell { width: 65px; height: 65px; background: #2d3245; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.8rem; transition: 0.2s; border-bottom: 4px solid #1a1d29; }
-        .cell.active-cell:active { transform: translateY(2px); border-bottom-width: 0; }
-        .cell.opened { background: #1e2230; border-color: var(--neon); box-shadow: 0 0 15px rgba(0,212,255,0.2); }
-
-        /* UI BUTTONS */
-        .main-btn { 
-            width: 90%; max-width: 320px; padding: 18px; border: none; border-radius: 16px; 
-            background: linear-gradient(135deg, #00d4ff, #0055ff); color: white; 
-            font-weight: 800; font-size: 1.1rem; cursor: pointer; margin-top: 20px;
-            box-shadow: 0 4px 15px rgba(0, 85, 255, 0.4);
-        }
-        .main-btn:disabled { opacity: 0.5; filter: grayscale(1); }
-
-        /* NAV */
-        .nav { display: flex; background: #1a1d29; padding: 10px 0 30px; border-top: 2px solid #2d3245; }
-        .nav-item { flex: 1; text-align: center; color: #5c627a; font-size: 0.75rem; font-weight: 600; }
-        .nav-item.active { color: var(--neon); }
-        .nav-icon { font-size: 1.6rem; display: block; margin-bottom: 2px; }
-
-        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        canvas { max-width: 100%; height: auto; }
     </style>
 </head>
 <body>
 
 <div class="header">
-    <div style="font-weight: bold; letter-spacing: 1px;">CASINO <span style="color:var(--neon)">PRO</span></div>
-    <div id="p-bal">0</div>
+    <div style="font-weight: bold; color: var(--stake-green)">STAKE.TG</div>
+    <div class="wallet">
+        <span id="p-bal">0.00</span> <span style="color: var(--stake-green)">💰</span>
+    </div>
 </div>
 
-<div class="game-container">
-    <div id="slots" class="game-card active">
-        <div class="slot-machine">
-            <div class="reel"><div id="r1" class="reel-inner" style="top: 0;"></div></div>
-            <div class="reel"><div id="r2" class="reel-inner" style="top: 0;"></div></div>
-            <div class="reel"><div id="r3" class="reel-inner" style="top: 0;"></div></div>
+<div class="game-area">
+    <div id="view-mines" class="view active">
+        <div id="mines-status" style="margin-bottom: 20px; font-weight: bold; color: var(--text-main)">X 0.00</div>
+        <div class="mines-grid" id="mines-board"></div>
+        <div class="controls">
+            <div class="label">Bet Amount</div>
+            <div class="bet-input-wrap"><span>100.00</span> <span style="color: var(--text-main)">MAX</span></div>
+            <button class="stake-btn" id="m-action" onpointerdown="startMines()">Bet</button>
         </div>
-        <button class="main-btn" onpointerdown="spinSlots()" id="slot-btn">КРУТИТЬ (100)</button>
     </div>
 
-    <div id="mines" class="game-card">
-        <div id="m-status" style="margin-bottom:15px; color:var(--pink); font-weight:bold; font-size:1.2rem;">X 1.00</div>
-        <div class="grid" id="mine-grid"></div>
-        <button class="main-btn" onpointerdown="startMines()" id="m-start">ИГРАТЬ (100)</button>
-        <button class="main-btn" style="background:var(--gold); color:black; display:none;" id="m-cash" onpointerdown="mineCashout()">ЗАБРАТЬ</button>
-    </div>
-
-    <div id="plinko" class="game-card">
-        <canvas id="plinko-canvas" width="300" height="400"></canvas>
-        <button class="main-btn" onpointerdown="dropBall()" id="plinko-btn">ПУСК (100)</button>
+    <div id="view-plinko" class="view">
+        <canvas id="plinko-canvas" width="300" height="350"></canvas>
+        <div class="controls">
+            <button class="stake-btn" onpointerdown="dropBall()">Drop Ball</button>
+        </div>
     </div>
 </div>
 
-<div class="nav">
-    <div class="nav-item active" onpointerdown="switchGame('slots', this)"><span class="nav-icon">🎰</span>Слоты</div>
-    <div class="nav-item" onpointerdown="switchGame('mines', this)"><span class="nav-icon">💣</span>Сапер</div>
-    <div class="nav-item" onpointerdown="switchGame('plinko', this)"><span class="nav-icon">🟢</span>Plinko</div>
+<div class="navbar">
+    <div class="nav-link active" onpointerdown="switchTab('mines', this)">MINES</div>
+    <div class="nav-link" onpointerdown="switchTab('plinko', this)">PLINKO</div>
 </div>
 
 <script>
     let tg = window.Telegram.WebApp;
     tg.expand();
-    const urlParams = new URLSearchParams(window.location.search);
-    let balance = parseInt(urlParams.get('bal')) || 1000;
-    const balEl = document.getElementById('p-bal');
-    balEl.innerText = balance;
+    tg.backgroundColor = '#0f212e';
 
-    const syms = ['💎', '🍋', '🍒', '7️⃣', '🔔', '🍇'];
+    let balance = new URLSearchParams(window.location.search).get('bal') || 1000;
+    document.getElementById('p-bal').innerText = parseFloat(balance).toFixed(2);
 
-    function switchGame(id, el) {
-        document.querySelectorAll('.game-card').forEach(c => c.classList.remove('active'));
-        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        document.getElementById(id).classList.add('active');
+    function switchTab(game, el) {
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+        document.getElementById('view-' + game).classList.add('active');
         el.classList.add('active');
         tg.HapticFeedback.selectionChanged();
     }
 
-    // --- SLOTS LOGIC (PRO ANIMATION) ---
-    function initReels() {
-        [1,2,3].forEach(id => {
-            const r = document.getElementById('r'+id);
-            r.innerHTML = '';
-            for(let i=0; i<20; i++) {
-                const s = document.createElement('div');
-                s.className = 'symbol';
-                s.innerText = syms[Math.floor(Math.random()*syms.length)];
-                r.appendChild(s);
-            }
-        });
-    }
-    initReels();
-
-    function spinSlots() {
-        if(balance < 100) return;
-        const btn = document.getElementById('slot-btn');
-        btn.disabled = true;
-        tg.HapticFeedback.impactOccurred('heavy');
+    // --- MINES LOGIC ---
+    let mActive = false, mMines = [], mCount = 3, mX = 1.0, mOpened = 0;
+    
+    function startMines() {
+        if(mActive) { cashoutMines(); return; }
+        mActive = true; mX = 1.0; mOpened = 0; mMines = [];
+        document.getElementById('mines-board').innerHTML = '';
+        document.getElementById('m-action').innerText = 'Cashout';
+        document.getElementById('m-action').style.background = '#fbc531';
         
-        [1,2,3].forEach((id, i) => {
-            const r = document.getElementById('r'+id);
-            r.style.transition = `top ${2 + i}s cubic-bezier(0.45, 0.05, 0.55, 0.95)`;
-            r.style.top = "-1500px";
-        });
+        while(mMines.length < mCount) {
+            let r = Math.floor(Math.random()*25);
+            if(!mMines.includes(r)) mMines.push(r);
+        }
 
-        setTimeout(() => {
-            let results = [syms[Math.floor(Math.random()*6)], syms[Math.floor(Math.random()*6)], syms[Math.floor(Math.random()*6)]];
-            [1,2,3].forEach((id, i) => {
-                const r = document.getElementById('r'+id);
-                r.style.transition = 'none';
-                r.style.top = '0';
-                r.children[0].innerText = results[i];
-            });
-            let isWin = results[0] === results[1] && results[1] === results[2];
-            finishGame('slots', isWin ? 600 : 0);
-            btn.disabled = false;
-        }, 4500);
+        for(let i=0; i<25; i++) {
+            let c = document.createElement('div');
+            c.className = 'cell';
+            c.onpointerdown = () => openCell(i, c);
+            document.getElementById('mines-board').appendChild(c);
+        }
     }
 
-    // --- PLINKO LOGIC (CANVAS) ---
+    function openCell(idx, el) {
+        if(!mActive || el.classList.contains('open')) return;
+        if(mMines.includes(idx)) {
+            el.innerText = '💣'; el.style.background = '#ff4757';
+            mActive = false; endGame('mines', 0);
+        } else {
+            el.classList.add('open'); el.innerText = '💎';
+            mOpened++; mX *= 1.4;
+            document.getElementById('mines-status').innerText = 'X ' + mX.toFixed(2);
+            tg.HapticFeedback.impactOccurred('light');
+        }
+    }
+
+    function cashoutMines() {
+        mActive = false;
+        endGame('mines', Math.floor(100 * mX));
+    }
+
+    function endGame(game, win) {
+        tg.sendData(JSON.stringify({ game, amount: win }));
+        tg.HapticFeedback.notificationOccurred(win > 0 ? 'success' : 'error');
+        setTimeout(() => tg.close(), 1000);
+    }
+
+    // --- PLINKO ---
     const canvas = document.getElementById('plinko-canvas');
     const ctx = canvas.getContext('2d');
-    function drawPlinko() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.fillStyle = "#5c627a";
-        for(let row=0; row<8; row++) {
-            for(let col=0; col<=row; col++) {
+    function drawBoard() {
+        ctx.clearRect(0,0,300,350);
+        ctx.fillStyle = '#2f4553';
+        for(let r=0; r<10; r++) {
+            for(let c=0; c<=r; c++) {
                 ctx.beginPath();
-                ctx.arc(150 - (row*15) + (col*30), 50 + (row*40), 4, 0, Math.PI*2);
+                ctx.arc(150 - (r*12) + (c*24), 30 + (r*28), 3, 0, Math.PI*2);
                 ctx.fill();
             }
         }
     }
-    drawPlinko();
+    drawBoard();
 
     function dropBall() {
-        if(balance < 100) return;
-        const btn = document.getElementById('plinko-btn');
-        btn.disabled = true;
-        let x = 150, y = 20, vx = 0, vy = 5;
-        let row = 0;
-        
-        const anim = setInterval(() => {
-            drawPlinko();
+        let x = 150, y = 10, vx = 0, vy = 4, row = 0;
+        let t = setInterval(() => {
+            drawBoard();
             y += vy; x += vx;
-            ctx.fillStyle = var(--pink);
-            ctx.beginPath(); ctx.arc(x, y, 6, 0, Math.PI*2); ctx.fill();
-
-            if(y > 50 + (row * 40)) {
-                vx = (Math.random() - 0.5) * 6;
-                row++;
+            ctx.fillStyle = '#00e701';
+            ctx.beginPath(); ctx.arc(x,y,5,0,Math.PI*2); ctx.fill();
+            if(y > 30 + (row*28)) {
+                vx = (Math.random()-0.5)*8; row++;
                 tg.HapticFeedback.impactOccurred('light');
             }
-
-            if(row > 8) {
-                clearInterval(anim);
-                let win = Math.random() > 0.5 ? 200 : 0;
-                finishGame('plinko', win);
-                btn.disabled = false;
-                setTimeout(drawPlinko, 500);
-            }
+            if(row > 10) { clearInterval(t); endGame('plinko', Math.random()>0.5?150:0); }
         }, 30);
-    }
-
-    // --- MINES LOGIC ---
-    let mState = { active: false, x: 1.0, mines: [] };
-    function startMines() {
-        if(balance < 100) return;
-        mState = { active: true, x: 1.0, mines: [], opened: 0 };
-        document.getElementById('m-start').style.display = 'none';
-        document.getElementById('m-cash').style.display = 'block';
-        document.getElementById('mine-grid').innerHTML = '';
-        while(mState.mines.length < 3) {
-            let r = Math.floor(Math.random()*16);
-            if(!mState.mines.includes(r)) mState.mines.push(r);
-        }
-        for(let i=0; i<16; i++) {
-            let cell = document.createElement('div');
-            cell.className = 'cell active-cell';
-            cell.onpointerdown = () => {
-                if(!mState.active || cell.classList.contains('opened')) return;
-                if(mState.mines.includes(i)) {
-                    cell.innerText = '💣'; cell.style.background = '#ff4757';
-                    mState.active = false;
-                    setTimeout(() => finishGame('mines', 0), 1000);
-                } else {
-                    cell.innerText = '💎'; cell.classList.add('opened');
-                    mState.opened++; mState.x = (mState.x * 1.5).toFixed(2);
-                    document.getElementById('m-status').innerText = 'X ' + mState.x;
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
-            };
-            document.getElementById('mine-grid').appendChild(cell);
-        }
-    }
-
-    function mineCashout() {
-        if(!mState.active) return;
-        mState.active = false;
-        finishGame('mines', Math.floor(100 * mState.x));
-    }
-
-    function finishGame(game, win) {
-        balance = balance - 100 + win;
-        balEl.innerText = balance;
-        tg.HapticFeedback.notificationOccurred(win > 0 ? 'success' : 'error');
-        tg.sendData(JSON.stringify({ game, amount: win }));
-        if(game === 'mines') {
-            document.getElementById('m-start').style.display = 'block';
-            document.getElementById('m-cash').style.display = 'none';
-        }
     }
 </script>
 </body>
